@@ -1,0 +1,49 @@
+/**
+ * Created by Eunjin Yang on 2019. 3. 18.
+ * Github : http://github.com/jinny920311
+ */
+@mixin responsive($media, $i) {
+  @if $i == 'min'{
+    @media (min-width: $media) {
+      @content;
+    }
+  } @else {
+    @media (max-width: $media) {
+      @content;
+    }
+  }
+}
+//사용법
+//.test {
+//  @include responsive(900px, min) {
+//   color: blue;
+//  }
+//}
+
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+}
+//사용법
+//.test {
+// @include clearfix();
+// }
+//
+@mixin prefix($property, $value, $prefixes: ()) {
+  @each $prefix in $prefixes {
+    -#{$prefix}-#{$property}: $value;
+  }
+  #{$property}: $value;
+}
+//사용법
+//.test {
+//  @include prefix(transform, rotate(90deg), ('webkit', 'ms'));
+//}
+
+@mixin transition {
+  transition: all 0.2s ease;
+}
+//

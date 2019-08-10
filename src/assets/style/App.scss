@@ -1,0 +1,12 @@
+@import './utils/var';
+@import './utils/mixin';
+@import './base/fonts';
+@import './base/reset';
+
+.header {
+    padding: 1rem 2rem;
+    .header__title {
+        text-align: left;
+        font-size: 1.4rem;
+    }
+}

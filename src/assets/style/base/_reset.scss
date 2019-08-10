@@ -1,0 +1,85 @@
+/**
+ * Created by Eunjin Yang on 2019. 2. 28.
+ * Github : http://github.com/jinny920311
+ */
+
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+
+html {
+  font-size: .86vw;
+  @media all and (max-width: 900px) {
+    font-size: 15px;
+  }
+  @media all and (max-width: 600px) {
+    font-size: 15px;
+  }
+  @media all and (max-width: 450px) {
+    font-size: 14px;
+  }
+}
+
+*, body {
+  font-family: $korea;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+
+a,
+a:hover,
+a:focus,
+a:active,
+a:link {
+  text-decoration: none;
+  color: $primary;
+}
+
+img {
+  border: 0;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+ol, ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+fieldset {
+  border: 0;
+}
+
+button {
+  cursor: pointer;
+  &:focus {
+    outline: none;
+  }
+}
+
+input[type=text],
+button,
+textarea {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+strong,
+b {
+  color: inherit;
+  font-size: inherit;
+}
+
+i {
+  font-style: normal;
+}
+
+mark {
+  background: none;
+}
