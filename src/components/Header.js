@@ -5,7 +5,7 @@ class Header extends Component {
     render() {
         return (
             <header className="header">
-                <h1 className="header__title">폐원/위반 어린이집 조회</h1>
+                <h1 className="header__title">전국 어린이집 조회</h1>
             </header>
         );
     }

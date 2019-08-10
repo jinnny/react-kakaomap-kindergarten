@@ -6,8 +6,8 @@ class KakaoMap extends Component {
         super(...arguments);
         this.state = {
             sdkLoaded: false,
-            locations: [],
-            geoLocation: [],
+            kinderInfo: [],
+            myLocation: [],
         };
     }
     loadKakaoSdk = () => {
@@ -26,37 +26,84 @@ class KakaoMap extends Component {
             this.el = document.getElementById('kakao-map');
             this.kakao = window.kakao;
             this.kakao.maps.load( () => {
-                // 위치 받아오기
+                // 내 위치 가져오기
                 this._getLocation();
+                // 
                 let centerLatLng = new this.kakao.maps.LatLng(this.props.lat, this.props.lng);
-                if(this.state.geoLocation.length === 0 ){
+                if ( this.state.myLocation.length === 0 ){
                     centerLatLng = new this.kakao.maps.LatLng(this.props.lat, this.props.lng);
                     console.log(centerLatLng,'빈값');
-                }else {
-                    centerLatLng = new this.kakao.maps.LatLng(this.state.geoLocation[0], this.state.geoLocation[1]);
+                } else {
+                    centerLatLng = new this.kakao.maps.LatLng(this.state.myLocation[0], this.state.myLocation[1]);
                     console.log(centerLatLng,'안빈값');
                 }
+                
                 this.map = new this.kakao.maps.Map(this.el, {
                     level: 3,
                     center: centerLatLng
-                });
-
-                axios.get('http://kindergarten.qp3gauimxr.ap-northeast-2.elasticbeanstalk.com/kindergarten/addr/제주') // JSON File Path
-                    .then( response => {
-                        this.setState(
-                            // 비동기처리이기 떄문에, 콜백을 호출해줘야 해당 데이터가 받아올때까지 기다리게됨.
-                            {locations: response.data.data}, () => this.setKinderInfoClusterer()
-                        );
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
+                });                
+                
+                // this._dragPosition();
             });
+            
         });
     };
-    // 위치가져오기
-    setKinderInfoClusterer = () => {
-        const kinderInfo = this.state.locations;
+
+    // 지도를 드래그 했을때 위치를 불러오는 함수
+    _dragPosition = () => {
+        this.kakao.maps.event.addListener(this.map, 'dragend', function() {        
+    
+            // 지도 중심좌표를 얻어옵니다 
+            const latlng = this.map.getCenter(); 
+            
+            var message = '변경된 지도 중심좌표는 ' + latlng.getLat() + ' 이고, ';
+            message += '경도는 ' + latlng.getLng() + ' 입니다';
+            
+            console.log(message)
+            this.setState({
+                myLocation: this.state.myLocation.concat(latlng.getLat(),latlng.getLng())
+            }, () => {
+                this.setCenter();
+            })
+        });
+    }
+
+    // 어린이집 데이터 가져오는 함수
+    _getKinderData = () => {
+        // 내위치 정보가 있을 경우
+        if ( this.state.myLocation.length === 0 ){
+            console.log(this.state.myLocation)
+            this._getDataFromDistance(this.props.lat, this.props.lng, 10000)
+        // 내위치 정보가 없을 경우
+        } else {
+            console.log(this.state.myLocation)
+            this._getDataFromDistance(this.state.myLocation[0], this.state.myLocation[1], 1000)
+        }
+    }
+
+    // 거리에 따른 데이터를 가져오는 함수
+    _getDataFromDistance = (x,y,d) => {
+        axios.get('http://kindergarten.qp3gauimxr.ap-northeast-2.elasticbeanstalk.com/kindergarten/geo', {
+            params: {
+                x: x,
+                y: y,
+                distance: d
+            }
+        }) // JSON File Path
+            .then( response => {
+                this.setState(
+                    // 비동기처리이기 떄문에, 콜백을 호출해줘야 해당 데이터가 받아올때까지 기다리게됨.
+                    {kinderInfo: response.data.data}, () => this._setKinderInfoClusterer()
+                );
+        })
+        .catch(function (error) {
+            console.log(error);
+        }); 
+    }
+    
+    // 어린이집에 클러스터러 세팅하는 함수
+    _setKinderInfoClusterer = () => {
+        const kinderInfo = this.state.kinderInfo;
 
         // 마커 클러스터러를 생성합니다 
         const clusterer = new this.kakao.maps.MarkerClusterer({
@@ -91,46 +138,43 @@ class KakaoMap extends Component {
     }
     
     // 어린이집정보세팅 후 뿌려주는 함수
-    setKinderInfo = () => {
-        // 마커를 표시할 위치와 title 객체 배열입니다 
-        const kinderInfo = this.state.locations;
+    // setKinderInfo = () => {
+    //     // 마커를 표시할 위치와 title 객체 배열입니다 
+    //     const kinderInfo = this.state.kinderInfo;
 
-        // 마커 이미지의 이미지 주소입니다
-        const imageSrc = "http://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png"; 
-        console.log(kinderInfo);
-        for (let i = 0; i < kinderInfo.length; i ++) {
-            // console.log(kinderInfo.length, kinderInfo[i].name);
-            // 마커 이미지의 이미지 크기 입니다
-            const imageSize = new this.kakao.maps.Size(24, 35); 
-            // 마커 이미지를 생성합니다    
-            const markerImage = new this.kakao.maps.MarkerImage(imageSrc, imageSize); 
+    //     // 마커 이미지의 이미지 주소입니다
+    //     const imageSrc = "http://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png"; 
+    //     console.log(kinderInfo);
+    //     for (let i = 0; i < kinderInfo.length; i ++) {
+    //         // console.log(kinderInfo.length, kinderInfo[i].name);
+    //         // 마커 이미지의 이미지 크기 입니다
+    //         const imageSize = new this.kakao.maps.Size(24, 35); 
+    //         // 마커 이미지를 생성합니다    
+    //         const markerImage = new this.kakao.maps.MarkerImage(imageSrc, imageSize); 
             
-            // 마커를 생성합니다
-            const marker = new this.kakao.maps.Marker({
-                map: this.map, // 마커를 표시할 지도
-                position: new this.kakao.maps.LatLng(kinderInfo[i].geo.coordinates[1],kinderInfo[i].geo.coordinates[0]), // 마커를 표시할 위치
-                title : kinderInfo[i].name, // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
-                image : markerImage // 마커 이미지 
-            });
-              // 마커에 표시할 인포윈도우를 생성합니다 
-            const infowindow = new this.kakao.maps.InfoWindow({
-                content: kinderInfo[i].name+'<p>'+kinderInfo[i].tel+'</p>' // 인포윈도우에 표시할 내용
-            });
+    //         // 마커를 생성합니다
+    //         const marker = new this.kakao.maps.Marker({
+    //             map: this.map, // 마커를 표시할 지도
+    //             position: new this.kakao.maps.LatLng(kinderInfo[i].geo.coordinates[1],kinderInfo[i].geo.coordinates[0]), // 마커를 표시할 위치
+    //             title : kinderInfo[i].name, // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
+    //             image : markerImage // 마커 이미지 
+    //         });
+    //           // 마커에 표시할 인포윈도우를 생성합니다 
+    //         const infowindow = new this.kakao.maps.InfoWindow({
+    //             content: kinderInfo[i].name+'<p>'+kinderInfo[i].tel+'</p>' // 인포윈도우에 표시할 내용
+    //         });
 
-            // 마커에 mouseover 이벤트와 mouseout 이벤트를 등록합니다
-            // 이벤트 리스너로는 클로저를 만들어 등록합니다 
-            // for문에서 클로저를 만들어 주지 않으면 마지막 마커에만 이벤트가 등록됩니다
-            this.kakao.maps.event.addListener(marker, 'mouseover', this.makeOverListener(this.map, marker, infowindow));
-            this.kakao.maps.event.addListener(marker, 'mouseout', this.makeOutListener(infowindow));
-            this.kakao.maps.event.addListener(marker, 'click', function() {
-                // 마커 위에 인포윈도우를 표시합니다
-                infowindow.open(this.map, marker);  
-          });
-        } 
-
-
-        
-    }
+    //         // 마커에 mouseover 이벤트와 mouseout 이벤트를 등록합니다
+    //         // 이벤트 리스너로는 클로저를 만들어 등록합니다 
+    //         // for문에서 클로저를 만들어 주지 않으면 마지막 마커에만 이벤트가 등록됩니다
+    //         this.kakao.maps.event.addListener(marker, 'mouseover', this.makeOverListener(this.map, marker, infowindow));
+    //         this.kakao.maps.event.addListener(marker, 'mouseout', this.makeOutListener(infowindow));
+    //         this.kakao.maps.event.addListener(marker, 'click', function() {
+    //             // 마커 위에 인포윈도우를 표시합니다
+    //             infowindow.open(this.map, marker);  
+    //       });
+    //     } 
+    // }
 
     // 지도위치 중앙으로 옮기는 함수
     setCenter = (_latitude, _longitude) => {            
@@ -140,26 +184,29 @@ class KakaoMap extends Component {
         
         // 지도 중심을 이동 시킵니다
         this.map.setCenter(moveLatLon);
+
+        this._getDataFromDistance(this.state.myLocation[0], this.state.myLocation[1], 1000)
     }
     
-    // 위치 가져오기 성공했을 때 함수입니다.
+    // 위치 가져오기 성공했을 때 함수
     getSuccess = (position) => {
         let crd = position.coords;
         this.setState({
-            geoLocation: this.state.geoLocation.concat(crd.latitude, crd.longitude)
+            myLocation: this.state.myLocation.concat(crd.latitude, crd.longitude)
+        }, () => {
+            this.setCenter(this.state.myLocation[0], this.state.myLocation[1]);
         });
-        this.setCenter(this.state.geoLocation[0], this.state.geoLocation[1]);
     };
       
     getError = (err) => {
         console.warn('ERROR(' + err.code + '): ' + err.message);
         alert('현재 위치를 찾을 수 없습니다. 설정에서 위치동의를 허용해주세요.')
         this.setState({
-            geoLocation: this.state.geoLocation.concat(this.props.lat, this.props.lng)
+            myLocation: this.state.myLocation.concat(this.props.lat, this.props.lng)
         })
     };
     
-    // 내 위치를 가져오는 함수입니다.
+    // 내 위치를 가져오는 함수
     _getLocation = () => {
         const options = {
             enableHighAccuracy: true,
@@ -172,9 +219,11 @@ class KakaoMap extends Component {
             alert('현재 위치를 찾을 수 없습니다. chorme 브라우저를 이용해주세요.')
             /* 지오로케이션 사용 불가능 */ 
             this.setState({
-                geoLocation: this.state.geoLocation.concat(this.props.lat, this.props.lng)
+                myLocation: this.state.myLocation.concat(this.props.lat, this.props.lng)
             })
           }
+
+          this._getKinderData();
     }
     // 인포윈도우를 표시하는 클로저를 만드는 함수입니다 
     makeOverListener = (map, marker, infowindow) => {
@@ -190,15 +239,6 @@ class KakaoMap extends Component {
         };
     }
     componentWillMount() {
-        axios.get('default.data.json') // JSON File Path
-            .then( response => {
-            this.setState({
-                locations: response.data
-            });
-        })
-        .catch(function (error) {
-            console.log(error);
-        });
     }
     sdkLoaded() {
         this.setState({ sdkLoaded: true });
