@@ -2,6 +2,7 @@
  * Created by Eunjin Yang on 2019. 3. 18.
  * Github : http://github.com/jinny920311
  */
+ 
 @mixin responsive($media, $i) {
   @if $i == 'min'{
     @media (min-width: $media) {

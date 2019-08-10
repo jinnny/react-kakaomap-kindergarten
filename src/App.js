@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import './assets/style/App.scss';
 import Header from './components/Header';
-// import KakaoMap from 'react-kakao-map';
 import KakaoMap from './components/KakaoMap';
 
 class App extends Component {

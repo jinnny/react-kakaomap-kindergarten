@@ -102,7 +102,6 @@ class KakaoMap extends Component {
             // console.log(kinderInfo.length, kinderInfo[i].name);
             // 마커 이미지의 이미지 크기 입니다
             const imageSize = new this.kakao.maps.Size(24, 35); 
-            
             // 마커 이미지를 생성합니다    
             const markerImage = new this.kakao.maps.MarkerImage(imageSrc, imageSize); 
             
@@ -128,6 +127,9 @@ class KakaoMap extends Component {
                 infowindow.open(this.map, marker);  
           });
         } 
+
+
+        
     }
 
     // 지도위치 중앙으로 옮기는 함수
