@@ -32,18 +32,20 @@ class KakaoMap extends Component {
                 let centerLatLng = new this.kakao.maps.LatLng(this.props.lat, this.props.lng);
                 if ( this.state.myLocation.length === 0 ){
                     centerLatLng = new this.kakao.maps.LatLng(this.props.lat, this.props.lng);
-                    console.log(centerLatLng,'빈값');
+                    // console.log(centerLatLng,'빈값');
                 } else {
                     centerLatLng = new this.kakao.maps.LatLng(this.state.myLocation[0], this.state.myLocation[1]);
-                    console.log(centerLatLng,'안빈값');
+                    // console.log(centerLatLng,'안빈값');
                 }
                 
                 this.map = new this.kakao.maps.Map(this.el, {
                     level: 3,
                     center: centerLatLng
                 });                
-                
-                // this._dragPosition();
+                //  드래그끝났을때 위치를 가져옴
+                this._dragPosition();
+                // 줌인아웃을 했을때 거리 수정
+                this._zoomMap();
             });
             
         });
@@ -51,20 +53,43 @@ class KakaoMap extends Component {
 
     // 지도를 드래그 했을때 위치를 불러오는 함수
     _dragPosition = () => {
-        this.kakao.maps.event.addListener(this.map, 'dragend', function() {        
-    
-            // 지도 중심좌표를 얻어옵니다 
-            const latlng = this.map.getCenter(); 
+        this.kakao.maps.event.addListener(this.map, 'dragend', () => {        
+            // console.log(this.map)
+            this._getCenterMap();
+        });
+    }
+
+    // 지도 중심좌표를 얻어와(내 위치를 변경해주고) 중심을 이동하는 함수를 호출하는 함수
+    _getCenterMap = () => {
+        // 지도 중심좌표를 얻어옵니다 
+        const latlng = this.map.getCenter(); 
+                
+        // console.log(latlng.getLat(),latlng.getLng())
+
+        const _myLocation = Array.from([latlng.getLat(), latlng.getLng()]);
+        this.setState({
+            myLocation: _myLocation
+        }, () => {
+            // console.log(_myLocation)
+            this.setCenter(_myLocation[0],_myLocation[1]);
+        })
+    }
+
+    // 지도 확대 축소시 레벨이 4이상인 경우 거래를 3km 로 변경하는 함수
+    _zoomMap = () => {    
+        // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
+        var zoomControl = new this.kakao.maps.ZoomControl();
+        this.map.addControl(zoomControl, this.kakao.maps.ControlPosition.RIGHT);
+
+        // 지도가 확대 또는 축소되면 마지막 파라미터로 넘어온 함수를 호출하도록 이벤트를 등록합니다
+        this.kakao.maps.event.addListener(this.map, 'zoom_changed', () => {        
             
-            var message = '변경된 지도 중심좌표는 ' + latlng.getLat() + ' 이고, ';
-            message += '경도는 ' + latlng.getLng() + ' 입니다';
-            
-            console.log(message)
-            this.setState({
-                myLocation: this.state.myLocation.concat(latlng.getLat(),latlng.getLng())
-            }, () => {
-                this.setCenter();
-            })
+            // 지도의 현재 레벨을 얻어옵니다
+            const level = this.map.getLevel();
+        
+            if(level >= 4) {
+                this._getDataFromDistance(this.state.myLocation[0], this.state.myLocation[1], 3000)
+            }
         });
     }
 
@@ -72,7 +97,7 @@ class KakaoMap extends Component {
     _getKinderData = () => {
         // 내위치 정보가 있을 경우
         if ( this.state.myLocation.length === 0 ){
-            console.log(this.state.myLocation)
+            // console.log(this.state.myLocation)
             this._getDataFromDistance(this.props.lat, this.props.lng, 10000)
         // 내위치 정보가 없을 경우
         } else {
@@ -129,9 +154,13 @@ class KakaoMap extends Component {
         // 마커에 표시할 인포윈도우를 생성합니다 
         const infowindow = kinderInfo.map((position) => {
             return new this.kakao.maps.InfoWindow({
+                position : new this.kakao.maps.LatLng(position.geo.coordinates[1], position.geo.coordinates[0]),
                 content: position.name+'<p>'+ position.tel+'</p>' // 인포윈도우에 표시할 내용
             });
         });
+         
+        // this.kakao.maps.event.addListener(marker, 'mouseover', this.makeOverListener(this.map, marker, infowindow));
+
 
         // 클러스터러에 마커들을 추가합니다
         clusterer.addMarkers(markers);
@@ -179,7 +208,7 @@ class KakaoMap extends Component {
     // 지도위치 중앙으로 옮기는 함수
     setCenter = (_latitude, _longitude) => {            
         // 이동할 위도 경도 위치를 생성합니다
-        console.log(_longitude , _latitude);
+        // console.log(_longitude , _latitude);
         let moveLatLon = new this.kakao.maps.LatLng(_latitude, _longitude);
         
         // 지도 중심을 이동 시킵니다
